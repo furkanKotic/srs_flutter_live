@@ -1,20 +1,21 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io' show Platform;
 
 import 'package:flutter_live/flutter_live.dart' as flutter_live;
 import 'package:flutter_webrtc/flutter_webrtc.dart' as webrtc;
 import 'package:fijkplayer/fijkplayer.dart' as fijkplayer;
-import 'package:camera_with_rtmp/camera.dart' as camera;
+import 'package:rtmp_with_capture/camera.dart' as camera;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'privacy.dart';
+//import 'package:camera/camera.dart' as camera;
 
 void main() {
   runApp(MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Platform.isAndroid? Privacy() : Home(),
-  ));
+      home: Platform.isAndroid ? Privacy() : Home(),
+    ));
 }
 
 class Home extends StatefulWidget {
@@ -24,17 +25,18 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   // Platform information.
-  PackageInfo _info = PackageInfo(version: '0.0.0', buildNumber: '0');
+  PackageInfo _info = PackageInfo(appName:'srs-app',packageName:'0.0.0', version: '0.0.0', buildNumber: '0');
 
   // The url to play or publish.
-  String _url; // The final url, should equals to controller.text
+  String _url = ""; // The final url, should equals to controller.text
   final TextEditingController _urlController = TextEditingController();
 
   // For publisher.
   bool _isPublish = false;
   bool _isPublishing = false;
   // The controller for publisher.
-  camera.CameraController _cameraController = null;
+  camera.CameraController ?_cameraController;
+  //late camera.CameraController _cameraController;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +62,9 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
 
-    _urlController.text = _url;
+    if (_url != null) {
+      _urlController.text = _url;
+    }
     _urlController.addListener(_onUserEditUrl);
 
     PackageInfo.fromPlatform().then((info) {
@@ -87,7 +91,10 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void _onUserSelectUrl(String v) {
+  void _onUserSelectUrl(String ?v) {
+    if (v == null) {
+      return;
+    }
     print('User select $v, url=$_url, text=${_urlController.text}');
     if (_url != v) {
       setState(() {
@@ -97,16 +104,16 @@ class _HomeState extends State<Home> {
   }
 
   bool isUrlValid() {
-    return _url != null && _url.contains('://');
+    return _url != null && _url!.contains('://');
   }
 
-  void disposeCamera() async {
+  Future<void> disposeCamera() async {
     if (_cameraController == null) {
       return;
     }
     _isPublishing = false;
-    await _cameraController.stopVideoStreaming();
-    await _cameraController.dispose();
+    await _cameraController!.stopVideoStreaming();
+    await _cameraController!.dispose();
     _cameraController = null;
     print('Camera disposed, publish=$_isPublish, publishing=$_isPublishing');
   }
@@ -128,7 +135,7 @@ class _HomeState extends State<Home> {
     // For player.
     if (!_isPublish) {
       Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return _url.startsWith('webrtc://')? WebRTCStreamingPlayer(_url) : LiveStreamingPlayer(_url);
+        return _url!.startsWith('webrtc://')? WebRTCStreamingPlayer(_url!) : LiveStreamingPlayer(_url!);
       }));
       return;
     }
@@ -140,7 +147,7 @@ class _HomeState extends State<Home> {
     }
 
     // For publisher, publishing RTMP streaming.
-    if (_url.startsWith('rtmp://')) {
+    if (_url!.startsWith('rtmp://')) {
       stopPublish();
 
       var cameras = await camera.availableCameras();
@@ -159,14 +166,14 @@ class _HomeState extends State<Home> {
       print('Use camera ${desc.name} ${desc.lensDirection}');
 
       _cameraController = camera.CameraController(desc, camera.ResolutionPreset.low);
-      _cameraController.addListener(() {
+      _cameraController!.addListener(() {
         setState(() { print('got camera event'); });
       });
 
-      await _cameraController.initialize();
+      await _cameraController!.initialize();
       print('Camera initialized ok');
 
-      await _cameraController.startVideoStreaming(_url, bitrate: 300 * 1000);
+      await _cameraController!.startVideoStreaming(_url!, bitrate: 300 * 1000, androidUseOpenGL: false);
       print('Start streaming to $_url');
 
       setState(() { _isPublishing = true; });
@@ -199,7 +206,7 @@ class UrlInputDisplay extends StatelessWidget {
 
 class DemoUrlsDisplay extends StatelessWidget {
   final String _url;
-  final ValueChanged<String> _onUserSelectUrl;
+  final ValueChanged<String?> _onUserSelectUrl;
   final bool _isPublish;
   DemoUrlsDisplay(this._url, this._onUserSelectUrl, this._isPublish);
 
@@ -323,7 +330,7 @@ class ControlDisplay extends StatelessWidget {
 
 class CameraDisplay extends StatelessWidget {
   final bool _isPublish;
-  final camera.CameraController _cameraController;
+  final camera.CameraController ?_cameraController;
   CameraDisplay(this._isPublish, this._cameraController);
 
   @override
@@ -336,15 +343,15 @@ class CameraDisplay extends StatelessWidget {
       return Container();
     }
 
-    if (!_cameraController.value.isInitialized) {
+    if (!_cameraController!.value.isInitialized) {
       return Container(child: Center(child: Text(
         'Camera not available', style: TextStyle(color: Colors.red[500]),
       )));
     }
 
     return AspectRatio(
-        aspectRatio: _cameraController.value.aspectRatio,
-        child: camera.CameraPreview(_cameraController)
+        aspectRatio: _cameraController!.value.aspectRatio,
+        child: camera.CameraPreview(_cameraController!)
     );
   }
 }
