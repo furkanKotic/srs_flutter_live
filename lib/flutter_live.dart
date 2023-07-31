@@ -144,19 +144,19 @@ class WebRTCUri {
     var apiParams = [];
     for (var key in uri.queryParameters.keys) {
       if (key != 'api' && key != 'play' && key != 'schema') {
-        apiParams.add('${key}=${uri.queryParameters[key]}');
+        apiParams.add('$key=${uri.queryParameters[key]}');
       }
     }
 
-    var apiUrl = '${schema}://${uri.host}:${port}${api}';
-    if (!apiParams.isEmpty) {
+    var apiUrl = '$schema://${uri.host}:$port$api';
+    if (apiParams.isNotEmpty) {
       apiUrl += '?' + apiParams.join('&');
     }
 
 
     r.api = apiUrl;
     r.streamUrl = url;
-    print('Url ${url} parsed to api=${r.api}, stream=${r.streamUrl}');
+    print('Url $url parsed to api=${r.api}, stream=${r.streamUrl}');
     return r;
   }
 }
@@ -164,8 +164,8 @@ typedef RemoteMediaStreamCallBack  = void Function(webrtc.MediaStream stream);
 
 /// A WebRTC player, using [flutter_webrtc](https://pub.dev/packages/flutter_webrtc)
 class WebRTCPlayer {
-  late webrtc.RTCPeerConnection _pc;
-  late RemoteMediaStreamCallBack onRemoteStream;
+  webrtc.RTCPeerConnection? _pc;
+  RemoteMediaStreamCallBack? onRemoteStream;
 
   /// Initialize the player.
   void initState() {
@@ -188,7 +188,7 @@ class WebRTCPlayer {
     _pc!.onTrack = (event) {
       if (event.track.kind == 'video') {
         if (onRemoteStream != null) {
-          onRemoteStream(event.streams[0]);
+          onRemoteStream!(event.streams[0]);
         }
       }
     };
