@@ -20,30 +20,9 @@ class FlutterLive {
   /// Set the speaker phone on.
   // [enabled] Use Earpiece if false, or Loudspeaker if true.
   static Future<void> setSpeakerphoneOn(bool enabled) async {
-    await _channel.invokeMethod('setSpeakerphoneOn', <String, dynamic>{'enabled': enabled});
+    await _channel.invokeMethod(
+        'setSpeakerphoneOn', <String, dynamic>{'enabled': enabled});
   }
-
-  /// RTMP demo stream by https://ossrs.net/
-  static const String rtmp = 'rtmp://charlescao92.cn/live/livestream';
-
-  /// HLS demo stream by https://ossrs.net/
-  static const String hls = 'http://charlescao92.cn:8080/live/livestream.m3u8';
-
-  /// HTTP-FLV demo stream by https://ossrs.net/
-  static const String flv = 'http://charlescao92.cn:8080/live/livestream.flv';
-
-  /// HTTPS-FLV demo stream by https://ossrs.net/
-  static const String flvs = 'https://charlescao92.cn:8088/live/livestream.flv';
-
-  /// HTTPS-HLS demo stream by https://ossrs.net/
-  static const String hlss = 'https://charlescao92.cn:8088/live/livestream.m3u8';
-
-  /// WebRTC demo stream by https://ossrs.net/
-  static const String rtc = 'webrtc://charlescao92.cn/live/livestream';
-
-  // Publish demo stream by https://ossrs.net/
-  static const String rtmp_publish = 'rtmp://charlescao92.cn/live/livestream1';
-  static const String rtmp_publish2 = 'rtmp://charlescao92.cn/live/livestream2';
 
   /// The constructor for flutter live.
   FlutterLive();
@@ -78,19 +57,29 @@ class RealtimePlayer {
   Future<void> play(String url) async {
     print('Start play live streaming $url');
 
-    await _player.setOption(fijkplayer.FijkOption.playerCategory, "mediacodec-all-videos", 1);
-    await _player.setOption(fijkplayer.FijkOption.hostCategory, "request-screen-on", 1);
-    await _player.setOption(fijkplayer.FijkOption.hostCategory, "request-audio-focus", 1);
+    await _player.setOption(
+        fijkplayer.FijkOption.playerCategory, "mediacodec-all-videos", 1);
+    await _player.setOption(
+        fijkplayer.FijkOption.hostCategory, "request-screen-on", 1);
+    await _player.setOption(
+        fijkplayer.FijkOption.hostCategory, "request-audio-focus", 1);
 
     // Live low-latency: https://www.jianshu.com/p/d6a5d8756eec
     // For all options, read https://github.com/Bilibili/ijkplayer/blob/master/ijkmedia/ijkplayer/ff_ffplay_options.h
-    await _player.setOption(fijkplayer.FijkOption.formatCategory, "probesize", 16 * 1024); // in bytes
-    await _player.setOption(fijkplayer.FijkOption.formatCategory, "analyzeduration", 100 * 1000); // in us
-    await _player.setOption(fijkplayer.FijkOption.playerCategory, "packet-buffering", 0); // 0, no buffer.
-    await _player.setOption(fijkplayer.FijkOption.playerCategory, "max_cached_duration", 800); // in ms
-    await _player.setOption(fijkplayer.FijkOption.playerCategory, "max-buffer-size", 32 * 1024); // in bytes
-    await _player.setOption(fijkplayer.FijkOption.playerCategory, "infbuf", 1); // 1 for realtime.
-    await _player.setOption(fijkplayer.FijkOption.playerCategory, "min-frames", 1); // in frames
+    await _player.setOption(fijkplayer.FijkOption.formatCategory, "probesize",
+        16 * 1024); // in bytes
+    await _player.setOption(fijkplayer.FijkOption.formatCategory,
+        "analyzeduration", 100 * 1000); // in us
+    await _player.setOption(fijkplayer.FijkOption.playerCategory,
+        "packet-buffering", 0); // 0, no buffer.
+    await _player.setOption(fijkplayer.FijkOption.playerCategory,
+        "max_cached_duration", 800); // in ms
+    await _player.setOption(fijkplayer.FijkOption.playerCategory,
+        "max-buffer-size", 32 * 1024); // in bytes
+    await _player.setOption(
+        fijkplayer.FijkOption.playerCategory, "infbuf", 1); // 1 for realtime.
+    await _player.setOption(
+        fijkplayer.FijkOption.playerCategory, "min-frames", 1); // in frames
 
     await _player.setDataSource(url, autoPlay: true).catchError((e) {
       print("setDataSource error: $e");
@@ -111,11 +100,12 @@ class RealtimePlayer {
 class WebRTCUri {
   /// The api server url for WebRTC streaming.
   String api = "";
+
   /// The stream url to play or publish.
   String streamUrl = "";
 
   /// Parse the url to WebRTC uri.
-  static WebRTCUri parse(String ?url) {
+  static WebRTCUri parse(String? url) {
     WebRTCUri r = WebRTCUri();
     if (url == null) {
       return r;
@@ -129,11 +119,11 @@ class WebRTCUri {
       schema = 'https';
     }
 
-    var port = (uri.port > 0)? uri.port : 443;
+    var port = (uri.port > 0) ? uri.port : 443;
     if (schema == 'https') {
-      port = (uri.port > 0)? uri.port : 1986;//443;
+      port = (uri.port > 0) ? uri.port : 1986; //443;
     } else if (schema == 'http') {
-      port = (uri.port > 0)? uri.port : 1985;
+      port = (uri.port > 0) ? uri.port : 1985;
     }
 
     String? api = '/rtc/v1/play/';
@@ -153,14 +143,14 @@ class WebRTCUri {
       apiUrl += '?' + apiParams.join('&');
     }
 
-
     r.api = apiUrl;
     r.streamUrl = url;
     print('Url $url parsed to api=${r.api}, stream=${r.streamUrl}');
     return r;
   }
 }
-typedef RemoteMediaStreamCallBack  = void Function(webrtc.MediaStream stream);
+
+typedef RemoteMediaStreamCallBack = void Function(webrtc.MediaStream stream);
 
 /// A WebRTC player, using [flutter_webrtc](https://pub.dev/packages/flutter_webrtc)
 class WebRTCPlayer {
@@ -168,8 +158,7 @@ class WebRTCPlayer {
   RemoteMediaStreamCallBack? onRemoteStream;
 
   /// Initialize the player.
-  void initState() {
-  }
+  void initState() {}
 
   /// Start play a url.
   /// [url] must a path parsed by [WebRTCUri.parse] in https://github.com/rtcdn/rtcdn-draft
@@ -194,13 +183,15 @@ class WebRTCPlayer {
     };
 
     _pc!.addTransceiver(
-        kind: webrtc.RTCRtpMediaType.RTCRtpMediaTypeAudio,
-        init: webrtc.RTCRtpTransceiverInit(direction: webrtc.TransceiverDirection.RecvOnly),
+      kind: webrtc.RTCRtpMediaType.RTCRtpMediaTypeAudio,
+      init: webrtc.RTCRtpTransceiverInit(
+          direction: webrtc.TransceiverDirection.RecvOnly),
     );
 
     _pc!.addTransceiver(
       kind: webrtc.RTCRtpMediaType.RTCRtpMediaTypeVideo,
-      init: webrtc.RTCRtpTransceiverInit(direction: webrtc.TransceiverDirection.RecvOnly),
+      init: webrtc.RTCRtpTransceiverInit(
+          direction: webrtc.TransceiverDirection.RecvOnly),
     );
     print('WebRTC: Setup PC done, A|V RecvOnly');
 
@@ -209,22 +200,26 @@ class WebRTCPlayer {
       'mandatory': {'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true},
     });
     await _pc!.setLocalDescription(offer);
-    print('WebRTC: createOffer, ${offer.type} is ${offer.sdp!.replaceAll('\n', '\\n').replaceAll('\r', '\\r')}');
+    print(
+        'WebRTC: createOffer, ${offer.type} is ${offer.sdp!.replaceAll('\n', '\\n').replaceAll('\r', '\\r')}');
 
     webrtc.RTCSessionDescription answer = await _handshake(url, offer.sdp!);
-    print('WebRTC: got ${answer.type} is ${answer.sdp!.replaceAll('\n', '\\n').replaceAll('\r', '\\r')}');
+    print(
+        'WebRTC: got ${answer.type} is ${answer.sdp!.replaceAll('\n', '\\n').replaceAll('\r', '\\r')}');
 
     await _pc!.setRemoteDescription(answer);
   }
 
   /// Handshake to exchange SDP, send offer and got answer.
-  Future<webrtc.RTCSessionDescription> _handshake(String url, String offer) async {
+  Future<webrtc.RTCSessionDescription> _handshake(
+      String url, String offer) async {
     // Setup the client for HTTP or HTTPS.
     HttpClient client = HttpClient();
 
     try {
       // Allow self-sign certificate, see https://api.flutter.dev/flutter/dart-io/HttpClient/badCertificateCallback.html
-      client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
 
       // Parsing the WebRTC uri form url.
       WebRTCUri uri = WebRTCUri.parse(url);
@@ -238,7 +233,8 @@ class WebRTCPlayer {
       //    {code: 0, sdp: "answer", sessionid: "007r51l7:X2Lv"}
       HttpClientRequest req = await client.postUrl(Uri.parse(uri.api));
       req.headers.set('Content-Type', 'application/json');
-      req.add(utf8.encode(json.encode({'api': uri.api, 'streamurl': uri.streamUrl, 'sdp': offer})));
+      req.add(utf8.encode(json
+          .encode({'api': uri.api, 'streamurl': uri.streamUrl, 'sdp': offer})));
       print('WebRTC request: ${uri.api} offer=${offer.length}B');
 
       HttpClientResponse res = await req.close();
@@ -264,4 +260,3 @@ class WebRTCPlayer {
     }
   }
 }
-
