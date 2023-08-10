@@ -1,10 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:fijkplayer/fijkplayer.dart' as fijkplayer;
-import 'package:flutter_webrtc/flutter_webrtc.dart' as webrtc;
 
 /// The live streaming tools for flutter.
 class FlutterLive {
@@ -147,116 +144,5 @@ class WebRTCUri {
     r.streamUrl = url;
     print('Url $url parsed to api=${r.api}, stream=${r.streamUrl}');
     return r;
-  }
-}
-
-typedef RemoteMediaStreamCallBack = void Function(webrtc.MediaStream stream);
-
-/// A WebRTC player, using [flutter_webrtc](https://pub.dev/packages/flutter_webrtc)
-class WebRTCPlayer {
-  webrtc.RTCPeerConnection? _pc;
-  RemoteMediaStreamCallBack? onRemoteStream;
-
-  /// Initialize the player.
-  void initState() {}
-
-  /// Start play a url.
-  /// [url] must a path parsed by [WebRTCUri.parse] in https://github.com/rtcdn/rtcdn-draft
-  Future<void> play(String url) async {
-    print("webrtc play url:" + url);
-
-    // Create the peer connection.
-    _pc = await webrtc.createPeerConnection({
-      // AddTransceiver is only available with Unified Plan SdpSemantics
-      'sdpSemantics': "unified-plan"
-    });
-
-    print('WebRTC: createPeerConnection done');
-
-    // Setup the peer connection.
-    _pc!.onTrack = (event) {
-      if (event.track.kind == 'video') {
-        if (onRemoteStream != null) {
-          onRemoteStream!(event.streams[0]);
-        }
-      }
-    };
-
-    _pc!.addTransceiver(
-      kind: webrtc.RTCRtpMediaType.RTCRtpMediaTypeAudio,
-      init: webrtc.RTCRtpTransceiverInit(
-          direction: webrtc.TransceiverDirection.RecvOnly),
-    );
-
-    _pc!.addTransceiver(
-      kind: webrtc.RTCRtpMediaType.RTCRtpMediaTypeVideo,
-      init: webrtc.RTCRtpTransceiverInit(
-          direction: webrtc.TransceiverDirection.RecvOnly),
-    );
-    print('WebRTC: Setup PC done, A|V RecvOnly');
-
-    // Start SDP handshake.
-    webrtc.RTCSessionDescription offer = await _pc!.createOffer({
-      'mandatory': {'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true},
-    });
-    await _pc!.setLocalDescription(offer);
-    print(
-        'WebRTC: createOffer, ${offer.type} is ${offer.sdp!.replaceAll('\n', '\\n').replaceAll('\r', '\\r')}');
-
-    webrtc.RTCSessionDescription answer = await _handshake(url, offer.sdp!);
-    print(
-        'WebRTC: got ${answer.type} is ${answer.sdp!.replaceAll('\n', '\\n').replaceAll('\r', '\\r')}');
-
-    await _pc!.setRemoteDescription(answer);
-  }
-
-  /// Handshake to exchange SDP, send offer and got answer.
-  Future<webrtc.RTCSessionDescription> _handshake(
-      String url, String offer) async {
-    // Setup the client for HTTP or HTTPS.
-    HttpClient client = HttpClient();
-
-    try {
-      // Allow self-sign certificate, see https://api.flutter.dev/flutter/dart-io/HttpClient/badCertificateCallback.html
-      client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-
-      // Parsing the WebRTC uri form url.
-      WebRTCUri uri = WebRTCUri.parse(url);
-
-      // Do signaling for WebRTC.
-      // @see https://github.com/rtcdn/rtcdn-draft
-      //
-      // POST http://d.ossrs.net:11985/rtc/v1/play/
-      //    {api: "xxx", sdp: "offer", streamurl: "webrtc://d.ossrs.net:11985/live/livestream"}
-      // Response:
-      //    {code: 0, sdp: "answer", sessionid: "007r51l7:X2Lv"}
-      HttpClientRequest req = await client.postUrl(Uri.parse(uri.api));
-      req.headers.set('Content-Type', 'application/json');
-      req.add(utf8.encode(json
-          .encode({'api': uri.api, 'streamurl': uri.streamUrl, 'sdp': offer})));
-      print('WebRTC request: ${uri.api} offer=${offer.length}B');
-
-      HttpClientResponse res = await req.close();
-      String reply = await res.transform(utf8.decoder).join();
-      print('WebRTC reply: ${reply.length}B, ${res.statusCode}');
-
-      Map<String, dynamic> o = json.decode(reply);
-      if (!o.containsKey('code') || !o.containsKey('sdp') || o['code'] != 0) {
-        return Future.error(reply);
-      }
-
-      return Future.value(webrtc.RTCSessionDescription(o['sdp'], 'answer'));
-    } finally {
-      client.close();
-    }
-  }
-
-  /// Dispose the player.
-  void dispose() {
-    if (_pc != null) {
-      print("webrtc play pc close ");
-      _pc!.close();
-    }
   }
 }
