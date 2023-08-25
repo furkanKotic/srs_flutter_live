@@ -44,6 +44,8 @@ apply plugin: 'kotlin-android'
 android {
     compileSdkVersion 33
 
+    namespace 'net.ossrs.flutter_live'
+
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
