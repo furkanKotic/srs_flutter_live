@@ -3,28 +3,6 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:fijkplayer/fijkplayer.dart' as fijkplayer;
 
-/// The live streaming tools for flutter.
-class FlutterLive {
-  /// The channel for platform.
-  static const MethodChannel _channel = const MethodChannel('flutter_live');
-
-  /// Get the platform information.
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
-  }
-
-  /// Set the speaker phone on.
-  // [enabled] Use Earpiece if false, or Loudspeaker if true.
-  static Future<void> setSpeakerphoneOn(bool enabled) async {
-    await _channel.invokeMethod(
-        'setSpeakerphoneOn', <String, dynamic>{'enabled': enabled});
-  }
-
-  /// The constructor for flutter live.
-  FlutterLive();
-}
-
 /// A realtime player, using [fijkplayer](https://pub.dev/packages/fijkplayer).
 class RealtimePlayer {
   /// The under-layer fijkplayer.

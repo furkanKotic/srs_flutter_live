@@ -2,39 +2,22 @@ group 'net.ossrs.flutter_live'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.7.10'
+    ext.kotlin_version = "2.2.21"
     repositories {
-        maven {
-            url 'https://maven.aliyun.com/repository/google'
-        }
-        maven {
-            url 'https://maven.aliyun.com/repository/jcenter'
-        }
-        maven {
-            url 'https://maven.aliyun.com/nexus/content/groups/public'
-        }
+        google()
+        mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.3.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath("com.android.tools.build:gradle:8.12.3")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
     }
 }
 
-rootProject.allprojects {
+allprojects {
     repositories {
-        maven {
-            allowInsecureProtocol = true
-            url 'https://maven.aliyun.com/repository/google'
-        }
-        maven {
-            allowInsecureProtocol = true
-            url 'https://maven.aliyun.com/repository/jcenter'
-        }
-        maven {
-            allowInsecureProtocol = true
-            url 'https://maven.aliyun.com/nexus/content/groups/public'
-        }
+        google()
+        mavenCentral()
     }
 }
 
@@ -42,7 +25,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 33
+    compileSdk = 36
 
     namespace 'net.ossrs.flutter_live'
 
@@ -50,7 +33,7 @@ android {
         main.java.srcDirs += 'src/main/kotlin'
     }
     defaultConfig {
-        minSdkVersion 21
+        minSdk = 24
     }
     lintOptions {
         disable 'InvalidPackage'
